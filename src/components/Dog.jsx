@@ -8,13 +8,15 @@ import {
   useAnimations,
 } from "@react-three/drei";
 import gsap from "gsap";
+import { useGSAP } from "@gsap/react";
+import { ScrollTrigger } from "gsap/ScrollTrigger";
+
 gsap.registerPlugin(useGSAP, ScrollTrigger);
 
 
 
 const Dog = () => {
-  gsap.registerPlugin(useGSAP());
-  gsap.registerPlugin(ScrollTrigger);
+
 
   const model = useGLTF("/models/dog.drc.glb");
 
@@ -170,7 +172,7 @@ const branchMaterial = useMemo(() => {
     };
   }, [model, dogMaterial, branchMaterial]);
 
-  const dogModel = useRef(model);
+  const dogModel = useRef();
 
   useGSAP(() => {
     const tl = gsap.timeline({
@@ -323,8 +325,8 @@ const branchMaterial = useMemo(() => {
 
   return (
     <>
-    
       <primitive
+        ref={dogModel}
         object={model.scene}
         position={[0.25, -0.55, 0]}
         rotation={[0, Math.PI / 3.9, 0]}
