@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from "react";
+import React, { useEffect, useRef, useMemo } from "react";
 import * as THREE from "three";
 import { Canvas, useThree } from "@react-three/fiber";
 import {
@@ -8,8 +8,7 @@ import {
   useAnimations,
 } from "@react-three/drei";
 import gsap from "gsap";
-import { useGSAP } from "@gsap/react";
-import { ScrollTrigger } from "gsap/ScrollTrigger";
+gsap.registerPlugin(useGSAP, ScrollTrigger);
 
 
 
@@ -19,11 +18,14 @@ const Dog = () => {
 
   const model = useGLTF("/models/dog.drc.glb");
 
-  useThree(({ camera, scene, gl }) => {
-    camera.position.z = 0.55;
-    gl.toneMapping = THREE.ReinhardToneMapping;
-    gl.outputColorSpace = THREE.SRGBColorSpace;
-  });
+ const { camera, gl } = useThree();
+
+ useEffect(() => {
+   camera.position.set(0, 0, 0.55);
+
+   gl.toneMapping = THREE.ReinhardToneMapping;
+   gl.outputColorSpace = THREE.SRGBColorSpace;
+ }, [camera, gl]);
 
 
   const { actions } = useAnimations(model.animations, model.scene);
@@ -99,15 +101,25 @@ const Dog = () => {
     uProgress: { value: 1.0 },
   });
 
-  const dogMaterial = new THREE.MeshMatcapMaterial({
-    normalMap: normalMap,
+
+
+const dogMaterial = useMemo(() => {
+  const material = new THREE.MeshMatcapMaterial({
+    normalMap,
     matcap: mat2,
   });
 
-  const branchMaterial = new THREE.MeshMatcapMaterial({
+  material.onBeforeCompile = onBeforeCompile;
+
+  return material;
+}, [normalMap, mat2]);
+
+const branchMaterial = useMemo(() => {
+  return new THREE.MeshMatcapMaterial({
     normalMap: branchNormalMap,
     map: branchMap,
   });
+}, [branchNormalMap, branchMap]);
 
   function onBeforeCompile(shader) {
     shader.uniforms.uMatcapTexture1 = material.current.uMatcap1;
@@ -141,15 +153,22 @@ const Dog = () => {
     );
   }
 
-  dogMaterial.onBeforeCompile = onBeforeCompile;
+  useEffect(() => {
+    model.scene.traverse((child) => {
+      if (!child.isMesh) return;
 
-  model.scene.traverse((child) => {
-    if (child.name.includes("DOG")) {
-      child.material = dogMaterial;
-    } else {
-      child.material = branchMaterial;
-    }
-  });
+      if (child.name.includes("DOG")) {
+        child.material = dogMaterial;
+      } else {
+        child.material = branchMaterial;
+      }
+    });
+
+    return () => {
+      dogMaterial.dispose();
+      branchMaterial.dispose();
+    };
+  }, [model, dogMaterial, branchMaterial]);
 
   const dogModel = useRef(model);
 
