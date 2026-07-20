@@ -119,8 +119,8 @@ const Dog = () => {
     });
   }, [branchNormalMap, branchMap]);
 
-  function onBeforeCompile(shader) {
-    shader.uniforms.uMatcapTexture1 = material.current.uMatcap1;
+  const onBeforeCompile = useCallback((shader) => {
+ shader.uniforms.uMatcapTexture1 = material.current.uMatcap1;
     shader.uniforms.uMatcapTexture2 = material.current.uMatcap2;
     shader.uniforms.uProgress = material.current.uProgress;
 
@@ -149,7 +149,7 @@ const Dog = () => {
           vec4 matcapColor = mix(matcapColor2, matcapColor1, progress );
         `,
     );
-  }
+  }, []);
 
   useEffect(() => {
     model.scene.traverse((child) => {
