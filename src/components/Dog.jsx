@@ -13,27 +13,30 @@ import { ScrollTrigger } from "gsap/ScrollTrigger";
 
 gsap.registerPlugin(useGSAP, ScrollTrigger);
 
-
-
 const Dog = () => {
-
-
   const model = useGLTF("/models/dog.drc.glb");
 
- const { camera, gl } = useThree();
+  const { camera, gl } = useThree();
 
- useEffect(() => {
-   camera.position.set(0, 0, 0.55);
+  useEffect(() => {
+    camera.position.set(0, 0, 0.55);
 
-   gl.toneMapping = THREE.ReinhardToneMapping;
-   gl.outputColorSpace = THREE.SRGBColorSpace;
- }, [camera, gl]);
-
+    gl.toneMapping = THREE.ReinhardToneMapping;
+    gl.outputColorSpace = THREE.SRGBColorSpace;
+  }, [camera, gl]);
 
   const { actions } = useAnimations(model.animations, model.scene);
 
   useEffect(() => {
-    actions["Take 001"].play();
+    const action = actions?.["Take 001"];
+
+    if (action) {
+      action.reset().fadeIn(0.3).play();
+    }
+
+    return () => {
+      action?.fadeOut(0.3);
+    };
   }, [actions]);
 
   const [normalMap] = useTexture(["/dog_normals.jpg"]).map((texture) => {
@@ -103,25 +106,23 @@ const Dog = () => {
     uProgress: { value: 1.0 },
   });
 
+  const dogMaterial = useMemo(() => {
+    const material = new THREE.MeshMatcapMaterial({
+      normalMap,
+      matcap: mat2,
+    });
 
+    material.onBeforeCompile = onBeforeCompile;
 
-const dogMaterial = useMemo(() => {
-  const material = new THREE.MeshMatcapMaterial({
-    normalMap,
-    matcap: mat2,
-  });
+    return material;
+  }, [normalMap, mat2]);
 
-  material.onBeforeCompile = onBeforeCompile;
-
-  return material;
-}, [normalMap, mat2]);
-
-const branchMaterial = useMemo(() => {
-  return new THREE.MeshMatcapMaterial({
-    normalMap: branchNormalMap,
-    map: branchMap,
-  });
-}, [branchNormalMap, branchMap]);
+  const branchMaterial = useMemo(() => {
+    return new THREE.MeshMatcapMaterial({
+      normalMap: branchNormalMap,
+      map: branchMap,
+    });
+  }, [branchNormalMap, branchMap]);
 
   function onBeforeCompile(shader) {
     shader.uniforms.uMatcapTexture1 = material.current.uMatcap1;
@@ -186,22 +187,22 @@ const branchMaterial = useMemo(() => {
       },
     });
 
-    tl.to(dogModel.current.scene.position, {
+    tl.to(dogModel.current.position, {
       z: "-=0.75",
       y: "+=0.1",
     })
-      .to(dogModel.current.scene.rotation, {
+      .to(dogModel.current.rotation, {
         x: `+=${Math.PI / 15}`,
       })
       .to(
-        dogModel.current.scene.rotation,
+        dogModel.current.rotation,
         {
           y: `-=${Math.PI}`,
         },
         "third",
       )
       .to(
-        dogModel.current.scene.position,
+        dogModel.current.position,
         {
           x: "-=0.5",
           z: "+=0.6",
@@ -211,117 +212,56 @@ const branchMaterial = useMemo(() => {
       );
   }, []);
 
-  useEffect(() => {
-    document
-      .querySelector(`.title[img-title="tomorrowland"]`)
-      .addEventListener("mouseenter", () => {
-        material.current.uMatcap1.value = mat19;
-        gsap.to(material.current.uProgress, {
-          value: 0.0,
-          duration: 0.3,
-          onComplete: () => {
-            material.current.uMatcap2.value = material.current.uMatcap1.value;
-            material.current.uProgress.value = 1.0;
-          },
-        });
-      });
-    document
-      .querySelector(`.title[img-title="navy-pier"]`)
-      .addEventListener("mouseenter", () => {
-        material.current.uMatcap1.value = mat8;
+  const animateMatcap = (texture) => {
+    material.current.uMatcap1.value = texture;
 
-        gsap.to(material.current.uProgress, {
-          value: 0.0,
-          duration: 0.3,
-          onComplete: () => {
-            material.current.uMatcap2.value = material.current.uMatcap1.value;
-            material.current.uProgress.value = 1.0;
-          },
-        });
-      });
-    document
-      .querySelector(`.title[img-title="msi-chicago"]`)
-      .addEventListener("mouseenter", () => {
-        material.current.uMatcap1.value = mat9;
-
-        gsap.to(material.current.uProgress, {
-          value: 0.0,
-          duration: 0.3,
-          onComplete: () => {
-            material.current.uMatcap2.value = material.current.uMatcap1.value;
-            material.current.uProgress.value = 1.0;
-          },
-        });
-      });
-    document
-      .querySelector(`.title[img-title="phone"]`)
-      .addEventListener("mouseenter", () => {
-        material.current.uMatcap1.value = mat12;
-
-        gsap.to(material.current.uProgress, {
-          value: 0.0,
-          duration: 0.3,
-          onComplete: () => {
-            material.current.uMatcap2.value = material.current.uMatcap1.value;
-            material.current.uProgress.value = 1.0;
-          },
-        });
-      });
-    document
-      .querySelector(`.title[img-title="kikk"]`)
-      .addEventListener("mouseenter", () => {
-        material.current.uMatcap1.value = mat10;
-
-        gsap.to(material.current.uProgress, {
-          value: 0.0,
-          duration: 0.3,
-          onComplete: () => {
-            material.current.uMatcap2.value = material.current.uMatcap1.value;
-            material.current.uProgress.value = 1.0;
-          },
-        });
-      });
-    document
-      .querySelector(`.title[img-title="kennedy"]`)
-      .addEventListener("mouseenter", () => {
-        material.current.uMatcap1.value = mat8;
-
-        gsap.to(material.current.uProgress, {
-          value: 0.0,
-          duration: 0.3,
-          onComplete: () => {
-            material.current.uMatcap2.value = material.current.uMatcap1.value;
-            material.current.uProgress.value = 1.0;
-          },
-        });
-      });
-    document
-      .querySelector(`.title[img-title="opera"]`)
-      .addEventListener("mouseenter", () => {
-        material.current.uMatcap1.value = mat13;
-
-        gsap.to(material.current.uProgress, {
-          value: 0.0,
-          duration: 0.3,
-          onComplete: () => {
-            material.current.uMatcap2.value = material.current.uMatcap1.value;
-            material.current.uProgress.value = 1.0;
-          },
-        });
-      });
-    document.querySelector(`.titles`).addEventListener("mouseleave", () => {
-      material.current.uMatcap1.value = mat2;
-
-      gsap.to(material.current.uProgress, {
-        value: 0.0,
-        duration: 0.3,
-        onComplete: () => {
-          material.current.uMatcap2.value = material.current.uMatcap1.value;
-          material.current.uProgress.value = 1.0;
-        },
-      });
+    gsap.to(material.current.uProgress, {
+      value: 0,
+      duration: 0.3,
+      onComplete: () => {
+        material.current.uMatcap2.value = texture;
+        material.current.uProgress.value = 1;
+      },
     });
-  }, []);
+  };
+
+  useEffect(() => {
+    const titleMap = {
+      tomorrowland: mat19,
+      "navy-pier": mat8,
+      "msi-chicago": mat9,
+      phone: mat12,
+      kikk: mat10,
+      kennedy: mat8,
+      opera: mat13,
+    };
+
+    const cleanups = [];
+
+    Object.entries(titleMap).forEach(([name, texture]) => {
+      const el = document.querySelector(`.title[img-title="${name}"]`);
+      if (!el) return;
+
+      const handler = () => animateMatcap(texture);
+      el.addEventListener("mouseenter", handler);
+
+      cleanups.push(() => el.removeEventListener("mouseenter", handler));
+    });
+
+    const titles = document.querySelector(".titles");
+
+    if (titles) {
+      const leaveHandler = () => animateMatcap(mat2);
+
+      titles.addEventListener("mouseleave", leaveHandler);
+
+      cleanups.push(() =>
+        titles.removeEventListener("mouseleave", leaveHandler),
+      );
+    }
+
+    return () => cleanups.forEach((fn) => fn());
+  }, [mat2, mat8, mat9, mat10, mat12, mat13, mat19]);
 
   return (
     <>
